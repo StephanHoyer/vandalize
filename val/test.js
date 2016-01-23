@@ -9,8 +9,8 @@ describe('validator', () => {
     val = validator({
       isString: () => (value) => typeof value === 'string',
       hasLength: (length) => (value) => value.length === length,
-      invalid: () => () => 'validator failed',
-      thrower: () => () => { throw new Error('validator failed') }
+      invalid: () => () => 'invalid as expected',
+      thrower: () => () => { throw new Error('thrown as expected') }
     }, options)
   })
 
@@ -38,12 +38,12 @@ describe('validator', () => {
 
   it('should emit message of the failing validator', () => {
     var shouldFail = val.invalid()
-    expect(shouldFail(1)).to.be('validator failed')
+    expect(shouldFail(1)).to.be('invalid as expected')
   })
 
   it('should emit thrown error as message', () => {
     var shouldFail = val.thrower()
-    expect(shouldFail(1)).to.be('validator failed')
+    expect(shouldFail(1)).to.be('thrown as expected')
   })
 
   describe('exception mode', () => {
@@ -53,12 +53,33 @@ describe('validator', () => {
 
     it('should throw exceptions message the failing validator', () => {
       var shouldFail = val.invalid()
-      expect(() => shouldFail(1)).to.throwError(/^validator failed$/)
+      expect(() => shouldFail(1)).to.throwError(/^invalid as expected$/)
     })
 
     it('should forward exceptions thrown in validator', () => {
       var shouldFail = val.thrower()
-      expect(() => shouldFail(1)).to.throwError(/^validator failed$/)
+      expect(() => shouldFail(1)).to.throwError(/^thrown as expected$/)
+    })
+  })
+
+  describe('all error mode', () => {
+    beforeEach(() => {
+      options.mode = 'all'
+    })
+
+    it('should give an empty array if all is ok', () => {
+      var isString = val.isString()
+      expect(isString('foo')).to.eql([])
+    })
+
+    it('should give an array of validation errors', () => {
+      var shouldFail = val.invalid().isString('should be a string')
+      expect(shouldFail(1)).to.eql(['invalid as expected', 'should be a string'])
+    })
+
+    it('should give "validation failed" as fallback message', () => {
+      var shouldFail = val.isString()
+      expect(shouldFail(1)).to.eql(['validation failed'])
     })
   })
 })

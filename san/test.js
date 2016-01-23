@@ -6,7 +6,7 @@ describe('sanitizer', () => {
   beforeEach(() => {
     san = require('.')({
       up: () => (value) => value.toUpperCase(),
-      cut: (length) => (value) => value.slice(0, length),
+      cut: (length) => (value) => value.slice(0, length)
     })
   })
 
@@ -32,7 +32,7 @@ describe('sanitizer', () => {
   describe('objects', () => {
     var user
 
-    beforeEach(function() {
+    beforeEach(function () {
       user = {
         name: 'foo',
         password: 'bar',
