@@ -52,6 +52,11 @@ describe('validator', () => {
       options.mode = 'exception'
     })
 
+    it('should not throw if all is ok', () => {
+      var isString = val.isString()
+      expect(isString('foo')).to.be.ok()
+    })
+
     it('should throw exceptions message the failing validator', () => {
       var shouldFail = val.invalid()
       expect(() => shouldFail(1)).to.throwError(/^invalid as expected$/)

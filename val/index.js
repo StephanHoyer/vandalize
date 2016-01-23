@@ -33,7 +33,7 @@ module.exports = function init (fns, options, stack) {
     var allMode = options.mode === 'all'
     var exceptionMode = options.mode === 'exception'
     var result = stack.reduce(validate(value, options.mode), allMode ? [] : true)
-    if (exceptionMode) {
+    if (result !== true && exceptionMode) {
       throw new Error(result)
     }
     return result
