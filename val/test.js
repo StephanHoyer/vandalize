@@ -6,6 +6,7 @@ describe('validator', () => {
   var options = {}
 
   beforeEach(() => {
+    options.mode = 'single'
     val = validator({
       isString: () => (value) => typeof value === 'string',
       hasLength: (length) => (value) => value.length === length,
@@ -80,6 +81,23 @@ describe('validator', () => {
     it('should give "validation failed" as fallback message', () => {
       var shouldFail = val.isString()
       expect(shouldFail(1)).to.eql(['validation failed'])
+    })
+  })
+
+  describe('object handling', () => {
+    beforeEach(() => {
+      validateUser = val.object({
+        name: val.isString(),
+        password: val.hasLength(3)
+      })
+    })
+
+    it('should validate valid object', () => {
+      expect(validateUser({ name: 'foo', password: '123' })).to.be.ok()
+    })
+
+    it('should reject invalid object', () => {
+      expect(validateUser({ name: 'foo', password: '12' })).to.not.be.ok()
     })
   })
 })

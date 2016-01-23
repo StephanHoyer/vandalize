@@ -40,6 +40,19 @@ module.exports = function init (fns, options, stack) {
     }
     return allMode ? errors : result
   }
+  fns.object = function(schema) {
+    return function(obj) {
+      var isValid = true
+      Object.keys(schema).every(function (key) {
+        isValid = schema[key](obj[key])
+        if (typeof isValid === 'boolean') {
+          return isValid
+        }
+        return false
+      })
+      return isValid
+    }
+  }
   return Object.keys(fns).reduce(function (api, key) {
     api[key] = function () {
       var fn = fns[key]
