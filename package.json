@@ -1,0 +1,21 @@
+{
+  "name": "validize",
+  "description": "functional validation/sanitization framework",
+  "version": "0.1.0",
+  "homepage": "",
+  "repository": {
+    "url": "git://github.com/azu/power-assert-node-seed.git"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha **/*test.js"
+  },
+  "author": "azu",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/azu/power-assert-node-seed/issues"
+  },
+  "devDependencies": {
+    "mocha": "^2.3.3"
+  }
+}
