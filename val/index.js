@@ -1,44 +1,42 @@
+function validate(value, mode) {
+  var allMode = mode === 'all'
+  var exceptionMode = mode === 'exception'
+  return function (result, fn) {
+    if (!allMode && result !== true) {
+      return result
+    }
+    var isValid
+    try {
+      isValid = fn(value)
+    } catch (err) {
+      if (exceptionMode) {
+        throw err
+      }
+      // not in exception mode, unwrap the exception
+      isValid = err instanceof Error ? err.message : err
+    }
+    if (!allMode) {
+      return isValid
+    }
+    // if in all mode, collect the error and continue with the next validator
+    if (isValid !== true) {
+      result.push(isValid || 'validation failed')
+    }
+    return result
+  }
+}
+
 module.exports = function init (fns, options, stack) {
   options = options || {}
   stack = stack || []
   function api (value) {
     var allMode = options.mode === 'all'
     var exceptionMode = options.mode === 'exception'
-    var result = true
-    var errors = []
-    // in all mode we run through all validators (map),
-    // in first/exception mode we stop with the first error (every)
-    var walker = allMode ? 'map' : 'every'
-    stack[walker](function (fn) {
-      var isValid
-      try {
-        isValid = fn(value)
-      } catch (err) {
-        if (exceptionMode) {
-          throw err
-        }
-        // not in exception mode, unwrap the exception
-        isValid = err instanceof Error ? err.message : err
-      }
-      if (allMode) {
-        // if in all mode, collect the error and continue with the next validator
-        if (isValid !== true) {
-          errors.push(isValid || 'validation failed')
-        }
-        return
-      }
-      result = isValid
-      if (typeof isValid === 'boolean') {
-        return isValid
-      }
-      // if anything other than a true or false is returned by the validator
-      // we consider that as an error message an stop validating
-      return false
-    })
+    var result = stack.reduce(validate(value, options.mode), allMode ? [] : true)
     if (exceptionMode) {
       throw new Error(result)
     }
-    return allMode ? errors : result
+    return result
   }
   fns.object = function(schema) {
     return function(obj) {
