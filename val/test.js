@@ -1,72 +1,34 @@
-var san = require('.')({
-  up: () => (value) => value.toUpperCase(),
-  cut: (length) => (value) => value.slice(0, length),
-})
 var expect = require('expect.js')
 
-describe('sanitizer', () => {
+describe('validator', () => {
+  var val
 
-  it('should do nothing when no sanitizer is set', () => {
-    expect(san('foo')).to.be('foo')
+  beforeEach(() => {
+    val = require('.')({
+      isString: () => (value) => typeof value === 'string',
+      hasLength: (length) => (value) => value.length === length
+    })
   })
 
-  it('should use sanitizers', () => {
-    var upper = san.up()
-    var upperCut = upper.cut(2)
-    expect(upper('foo')).to.be('FOO')
-    expect(upperCut('bar')).to.be('BA')
+  it('should resolve when no validator is set', () => {
+    expect(val('foooo')).to.be.ok()
   })
 
-  it('should combine sanitizers', () => {
-    var upper = san.up()
-    var cut = san.cut(2)
-
-    var upperCut = san.combine(upper, cut)
-    expect(upperCut('bar')).to.be('BA')
+  it('should single validator', () => {
+    var isString = val.isString();
+    expect(isString('foooo')).to.be.ok()
+    expect(isString(1)).to.not.be.ok()
   })
 
-  describe('objects', () => {
-    var user
+  it('should multiple validator', () => {
+    var isShortString = val.isString().hasLength(2);
+    expect(isShortString('fo')).to.be.ok()
+    expect(isShortString('foooo')).to.not.be.ok()
+    expect(isShortString(1)).to.not.be.ok()
+  })
 
-    beforeEach(function() {
-      user = {
-        name: 'foo',
-        password: 'bar',
-        unwanted: 'baz'
-      }
-    })
-
-    it('should work', () => {
-      var sanUser = san.object({
-        name: san.up(),
-        password: san.cut(2)
-      })
-      expect(sanUser(user)).to.eql({
-        name: 'FOO',
-        password: 'ba'
-      })
-    })
-
-    it('should allow optional fields', () => {
-      var sanUser = san.object({
-        name: san.up(),
-        password: san.cut(2),
-        optionalField: san.optional().up().cut(2)
-      })
-      expect(sanUser(user)).to.eql({
-        name: 'FOO',
-        password: 'ba'
-      })
-      var user2 = {
-        name: 'hihi',
-        password: 'haha',
-        optionalField: 'huhu'
-      }
-      expect(sanUser(user2)).to.eql({
-        name: 'HIHI',
-        password: 'ha',
-        optionalField: 'HU'
-      })
-    })
+  it('should emit message of the failing validator', () => {
+    var isString = val.isString('should be a string')
+    expect(isString(1)).to.be('should be a string')
   })
 })
