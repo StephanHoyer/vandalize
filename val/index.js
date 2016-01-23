@@ -1,9 +1,19 @@
-module.exports = function init(fns, stack) {
+module.exports = function init(fns, options, stack) {
+  options = options || {}
   stack = stack || []
   function api(value) {
-    result = true
+    var exceptionMode = options.mode === 'exception';
+    var result = true
     stack.every(function(fn) {
-      var isValid = fn(value)
+      var isValid
+      try {
+        isValid = fn(value)
+      } catch(err) {
+        if (exceptionMode) {
+          throw err
+        }
+        isValid = err
+      }
       result = isValid
       if (typeof isValid === 'boolean') {
         return isValid
@@ -12,6 +22,13 @@ module.exports = function init(fns, stack) {
       // we consider that as an error message an stop validating
       return false
     })
+    if (options.mode === 'exception') {
+      throw new Error(result)
+    }
+    // not in exception mode, unwrap the exception
+    if (result instanceof Error) {
+      result = result.message
+    }
     return result
   }
   return Object.keys(fns).reduce(function(api, key) {
@@ -28,7 +45,7 @@ module.exports = function init(fns, stack) {
           return message
         }
       }
-      return init(fns, stack.concat(stackFn))
+      return init(fns, options, stack.concat(stackFn))
     }
     return api
   }, api)
