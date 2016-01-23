@@ -3,9 +3,10 @@ var BREAK = { break: true }
 module.exports = function init(fns, stack) {
   stack = stack || []
   function api(value) {
-    return stack.reduce(function(value, fn) {
-      return value === BREAK ? BREAK : fn(value)
-    }, value)
+    stack.every(function(fn) {
+      return (value = fn(value)) !== BREAK
+    })
+    return value
   }
   fns.combine = function(fn1, fn2) {
     return function (value) {
