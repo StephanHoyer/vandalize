@@ -1,26 +1,31 @@
-function validate(value, mode) {
+var FALLBACK_MESSAGE = 'validation failed'
+
+function validate(fn, value, exceptionMode) {
+  if (exceptionMode) {
+    return fn(value)
+  }
+  try {
+    return fn(value)
+  } catch (err) {
+    return err instanceof Error ? err.message : err
+  }
+}
+
+function validateRed(value, mode) {
   var allMode = mode === 'all'
   var exceptionMode = mode === 'exception'
   return function (result, fn) {
     if (!allMode && result !== true) {
+      // return first occured error
       return result
     }
-    var isValid
-    try {
-      isValid = fn(value)
-    } catch (err) {
-      if (exceptionMode) {
-        throw err
-      }
-      // not in exception mode, unwrap the exception
-      isValid = err instanceof Error ? err.message : err
-    }
+    var isValid = validate(fn, value, exceptionMode)
     if (!allMode) {
       return isValid
     }
     // if in all mode, collect the error and continue with the next validator
     if (isValid !== true) {
-      result.push(isValid || 'validation failed')
+      result.push(isValid || FALLBACK_MESSAGE)
     }
     return result
   }
@@ -30,25 +35,22 @@ module.exports = function init (fns, options, stack) {
   options = options || {}
   stack = stack || []
   function api (value) {
-    var allMode = options.mode === 'all'
-    var exceptionMode = options.mode === 'exception'
-    var result = stack.reduce(validate(value, options.mode), allMode ? [] : true)
-    if (result !== true && exceptionMode) {
-      throw new Error(result)
+    var result = stack.reduce(validateRed(value, options.mode), options.mode === 'all' ? [] : true)
+    if (result !== true && options.mode === 'exception') {
+      throw new Error(result || FALLBACK_MESSAGE)
     }
     return result
   }
   fns.object = function(schema) {
     return function(obj) {
-      var isValid = true
-      Object.keys(schema).every(function (key) {
-        isValid = schema[key](obj[key])
-        if (typeof isValid === 'boolean') {
-          return isValid
-        }
-        return false
-      })
-      return isValid
+      var result = Object.keys(schema).reduce(function(result, key) {
+        isValid = validateRed(obj[key], options.mode)(result, schema[key])
+        return isValid
+      }, options.mode === 'all' ? [] : true)
+      if (result !== true && options.mode === 'exception') {
+        throw new Error(result || FALLBACK_MESSAGE)
+      }
+      return result
     }
   }
   return Object.keys(fns).reduce(function (api, key) {
