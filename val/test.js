@@ -10,6 +10,7 @@ describe('validator', () => {
     val = validator({
       isString: () => (value) => typeof value === 'string',
       hasLength: (length) => (value) => value.length === length,
+      asyncInvalid: () => () => Promise.reject('async invalid as expected'),
       invalid: () => () => 'invalid as expected',
       thrower: () => () => { throw new Error('thrown as expected') }
     }, options)
@@ -87,6 +88,16 @@ describe('validator', () => {
       var shouldFail = val.isString()
       expect(shouldFail(1)).to.eql(['validation failed'])
     })
+  })
+
+  describe.skip('async validation', () => {
+    it('should validate valid object', () => {
+      var asyncValidator = val.async.asyncInvalid()
+      asyncValidator().then(()=>expect.fail(), function (err) {
+        expect(err).to.be('async invalid as expected')
+      })
+    })
+
   })
 
   describe('object handling', () => {
